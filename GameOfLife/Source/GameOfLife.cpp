@@ -75,11 +75,16 @@ void showMenu() {
 		 << "Option 7 is for the Glider " << endl
 		 << "Enter your option: ";
 	cin >> s; //the option from user
-	cout << "Now enter the start point of the shape (X, Y)." << endl
-		 << "X: ";
-	cin >> xC;
-	cout << "Y: ";
-	cin >> yC;
+	cout << "Now enter the start point of the shape (X, Y). Please enter values less than 10." << endl;
+	cout << "If you enter values > 10 you will be asked to enter the coordinates again." << endl;
+	do{
+		cout<< "X: ";
+		cin >> xC;
+		cout << "Y: ";
+		cin >> yC;
+		if (xC >= 10 || yC >= 10)
+			cout << "Enter the coordinates again." << endl;
+	} while (xC >= 10 && yC >= 10);
 	cout << "Now enter the desired no. of iterations." << endl
 		<< "Number of iterations: ";
 	cin >> noOfIterations;
@@ -109,11 +114,8 @@ void DrawBoat(int Xcoord, int Ycoord) {
 }
 void DrawBlinker(int Xcoord, int Ycoord) {
 	grid[Xcoord - 1][Ycoord - 1] = 1;
-	if(!(Ycoord>rows))
-		grid[Xcoord - 1][Ycoord - 2] = 1;
-	if ((Ycoord < rows))
+	grid[Xcoord - 1][Ycoord - 2] = 1;
 	grid[Xcoord - 1][Ycoord - 0] = 1;
-
 }
 void DrawBeacon(int Xcoord, int Ycoord) {
 	//top left part
