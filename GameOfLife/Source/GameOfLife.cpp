@@ -24,20 +24,25 @@ enum Shape {
 	Pentadecathlon = 6, 
 	Glider = 7
 };
-const int rows = 6;
-const int cols = 6;
+const int rows = 10;
+const int cols = 10;
+int noOfIterations = 0;
 int grid[rows][cols];
 int s;
 int xC, yC;
+
 
 void DrawShape(int Shape, int Xcoord, int Ycoord);
 void DrawBlock(int Xcoord, int Ycoord);
 void DrawBoat(int Xcoord, int Ycoord);
 void DrawBlinker(int Xcoord, int Ycoord);
 void DrawBeacon(int Xcoord, int Ycoord);
+void DrawGlider(int Xcoord, int Ycoord);
 bool CheckFewerThan2CellsAround(int xC, int yC);
 bool CheckAtleast2_3Cells(int xC, int yC);
 bool CheckMoreThan3Cells(int xC, int yC);
+bool ReviveCell(int xC, int yC);
+void Iteration(int xC, int yC, int noOfIt);
 
 void init();
 void showMenu();
@@ -45,8 +50,7 @@ void printGrid();
 
 int main()
 {
-	cout << "This application implements Conway's Game of Life." << endl;
-	// write your implementation here for the user interaction part.
+	cout << "This application implements Conway's Game of Life on a 10x10 board." << endl;
 	init();
 	showMenu();
 	
@@ -56,8 +60,8 @@ int main()
 }
 
 void init() {
-	for(int x=0;x<6;++x)
-		for(int y=0;y<6;++y)
+	for(int x=0;x<rows;++x)
+		for(int y=0;y<cols;++y)
 			grid[x][y] = 0;
 }
 void showMenu() {
@@ -76,11 +80,14 @@ void showMenu() {
 	cin >> xC;
 	cout << "Y: ";
 	cin >> yC;
+	cout << "Now enter the desired no. of iterations." << endl
+		<< "Number of iterations: ";
+	cin >> noOfIterations;
 }
 void printGrid() {
-	for (int x = 0; x < 6; x++)
+	for (int x = 0; x < rows; x++)
 	{
-		for (int y = 0; y < 6; y++)
+		for (int y = 0; y < cols; y++)
 			cout << grid[x][y] << " ";
 		cout << endl;
 	}
@@ -102,7 +109,9 @@ void DrawBoat(int Xcoord, int Ycoord) {
 }
 void DrawBlinker(int Xcoord, int Ycoord) {
 	grid[Xcoord - 1][Ycoord - 1] = 1;
-	grid[Xcoord - 1][Ycoord - 2] = 1;
+	if(!(Ycoord>rows))
+		grid[Xcoord - 1][Ycoord - 2] = 1;
+	if ((Ycoord < rows))
 	grid[Xcoord - 1][Ycoord - 0] = 1;
 
 }
@@ -112,38 +121,101 @@ void DrawBeacon(int Xcoord, int Ycoord) {
 	grid[Xcoord][Ycoord - 1] = 1;
 	grid[Xcoord - 1][Ycoord] = 1;
 	//bottom right part
-	grid[Xcoord + 2][Ycoord + 1] = 2;
-	grid[Xcoord + 1][Ycoord + 2] = 2;
-	grid[Xcoord + 2][Ycoord + 2] = 2;
+	grid[Xcoord + 2][Ycoord + 1] = 1;
+	grid[Xcoord + 1][Ycoord + 2] = 1;
+	grid[Xcoord + 2][Ycoord + 2] = 1;
+}
+void DrawGlider(int Xcoord, int Ycoord) {
+	grid[Xcoord - 2][Ycoord-1] = 1;
+	grid[Xcoord - 1][Ycoord] = 1;
+	grid[Xcoord][Ycoord] = 1;
+	grid[Xcoord][Ycoord - 1] = 1;
+	grid[Xcoord][Ycoord - 2] = 1;
 }
 void Redraw(int Iterations) {
 	for(int i =0;i<Iterations;++i){
-		vector<Point> vP;
-		for (int i = 0; i < 6; i++)
-			for (int j = 0; j < 6; j++)
-				if (grid[i][j] == 1)
-					if (!CheckFewerThan2CellsAround(i, j)) {
+		vector<Point> deaths;
+		vector<Point> alive;
+		for (int i = 0; i < rows; i++)
+			for (int j = 0; j < cols; j++)
+				if (grid[i][j] == 1){
+					if (CheckFewerThan2CellsAround(i, j) || CheckMoreThan3Cells(i,j)) {
 						Point p(i, j);
-						vP.push_back(p);
+						deaths.push_back(p);
 					}
-		for (Point p : vP)
+					else if (CheckAtleast2_3Cells(i, j)) {
+						Point p(i, j);
+						alive.push_back(p);
+					}
+				}
+				else if (grid[i][j] == 0) {
+					if (ReviveCell(i, j)) {
+						Point p(i, j);
+						//cout << i << " " << j << endl;;
+						alive.push_back(p);
+						}
+					}
+
+		for (Point p : alive)
+			grid[p.x][p.y] = 1;
+		for (Point p : deaths)
 			grid[p.x][p.y] = 0;
+		
 		cout << endl;
 		printGrid();
 	}
 }
 bool CheckFewerThan2CellsAround(int xC,int yC) {
 	int contor = 0;
-	for (int row = xC-1; row < xC+2; ++row)
+	for (int row = xC - 1; row < xC + 2 && row < rows; ++row)
 	{
-		for (int col = yC-1; col < yC+2; ++col)
+		for (int col = yC - 1; col < yC + 2 && col < cols; ++col)
 		{
 			if (grid[row][col])
 				contor++;
 					
 		}
 	}
-	return (contor-1)>=2;
+	return (contor-1)<2;
+}
+bool CheckAtleast2_3Cells(int xC, int yC) {
+	int contor = 0;
+	for (int row = xC - 1; row < xC + 2 && row < rows; ++row)
+	{
+		for (int col = yC - 1; col < yC + 2 && col < cols; ++col)
+		{
+			if (grid[row][col])
+				contor++;
+
+		}
+	}
+	return contor == 2 || contor == 3;
+}
+bool CheckMoreThan3Cells(int xC, int yC) {
+	int contor = 0;
+	for (int row = xC - 1; row < xC + 2 && row < rows; ++row)
+	{
+		for (int col = yC - 1; col < yC + 2 && col < cols; ++col)
+		{
+			if (grid[row][col])
+				contor++;
+
+		}
+	}
+	return (contor - 1) > 3 ;
+}
+bool ReviveCell(int xC, int yC) {
+	int contor = 0;
+	for (int row = xC - 1; row < xC + 2 && row<rows; ++row)
+	{
+		for (int col = yC - 1; col < yC + 2 && col<cols; ++col)
+		{
+			if (grid[row][col])
+				contor++;
+		}
+	}
+
+	return contor == 3;
 }
 void DrawShape(int Shape, int Xcoord, int Ycoord) {
 	
@@ -151,26 +223,29 @@ void DrawShape(int Shape, int Xcoord, int Ycoord) {
 	case Block: {
 		DrawBlock(Xcoord, Ycoord);
 		printGrid();
-		Sleep(2000);
+		Redraw(noOfIterations);
+		Sleep(1000000);
 		break;
 	}
 	case Boat: {
 		DrawBoat(Xcoord, Ycoord);
 		printGrid();
-		Sleep(2000);
+		Redraw(noOfIterations);
+		Sleep(1000000);
 		break;
 	}
 	case Blinker: {
 		DrawBlinker(Xcoord, Ycoord);
 		printGrid();
-		Redraw(5);
-		Sleep(10000);
+		Redraw(noOfIterations);
+		Sleep(1000000);
 		break;
 	}
 	case Beacon: {
 		DrawBeacon(Xcoord, Ycoord);
 		printGrid();
-		Sleep(2000);
+		Redraw(noOfIterations);
+		Sleep(1000000);
 		
 		break;
 	}
@@ -181,11 +256,16 @@ void DrawShape(int Shape, int Xcoord, int Ycoord) {
 
 	}
 	case Glider: {
+		DrawGlider(Xcoord, Ycoord);
+		printGrid();
+		Redraw(noOfIterations);
+		Sleep(1000000);
 
+		break;
 	}
 	default: {
 		cout << "Wrong figure input.";
-		Sleep(2000);
+		Sleep(100000);
 		break;
 	}
 	}
